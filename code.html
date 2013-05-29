@@ -1,6 +1,7 @@
 <html>
   <head>
     <link href="/css/ace.css" rel="stylesheet" type="text/css">
+    <link href="/css/jquery-ui.css" rel="stylesheet" type="text/css">
     <title>Code editor</title>
   </head>
 
@@ -8,74 +9,124 @@
     <div id="header">
       <div id="htext">
         Editing <b id='docname'>...</b>
-        <a style="padding-left: 50px;" href="/code.html">New</a>
+        <span style="float: right">
+        <a style="padding-right: 1em;" href='..'>Directory</a>
+        <a style="padding-right: 1em;" href='#' id='viewlink'>View</a>
+        <a style="padding-right: 1em;" href='#' id='liveviewlink'>Live view</a>
+        <a style="padding-right: 1em;" href='#' id='liveframelink'>Live iframe</a>
+        </span>
       </div>
         
     </div>
 
     <div id="editor">Loading...</div>
+    <div id="dialog"><iframe id="liveframe" style="width: 100%; height: 100%"></iframe></div>
+    <script src="/js/jquery-1.10.0.js"></script>
+    <script src="/js/jquery-ui.js"></script>
     <script src="/js/ace/ace.js"></script>
-    <!--<script src="/js/ace/mode-coffee.js"></script>-->
     <script src="/js/ace/theme-idle_fingers.js"></script>
     <script src="/js/sock.js"></script>
     <script src="/js/share.js"></script>
     <script src="/js/share-ace.js"></script>
     <script>
+      var viewLink = document.location.pathname.replace(/^\/edit/,"/view");
+      var dopened = false;
+      $('#viewlink').attr('href', viewLink);
+      $('#liveviewlink').attr('href', document.location.pathname.replace(/^\/edit/,"/live"));
+      $('#liveframelink').click(function(ev) {
+        dopened = true;
+        $('#liveframe').attr('src', viewLink);
+        $('#dialog').dialog({width: window.innerWidth/2, height: window.innerHeight/2});
+      });
 
-var extmap = {
-  '.js': 'javascript',
-  '.coffee': 'coffee',
-  '.litcoffee': 'coffee',
-  '.coffee.md': 'coffee',
-  '.css': 'css',
-  '.json': 'json',
-  '.html': 'html',
-  '.py': 'python',
-  '.rb': 'ruby'
-};
-var match = document.location.pathname.match(/\/.*?(\..*)$/);
-var mode;
-if (match) {
-  var ext = match[1];
-  mode = extmap[ext];
-}
-if (mode) {
-  var s = document.createElement('script');
-  s.src = "/js/ace/mode-" + mode + ".js";
-  document.head.appendChild(s);
-}
 
-window.onload = function() {
-  var editor = ace.edit("editor");
+      var extmap = {
+        '.c': 'c_cpp',
+        '.h': 'c_cpp',
+        '.cpp': 'c_cpp',
+        '.clj': 'clojure',
+        '.coffee': 'coffee',
+        '.litcoffee': 'coffee',
+        '.coffee.md': 'coffee',
+        '.cs': 'csharp',
+        '.css': 'css',
+        '.groovy': 'groovy',
+        '.html': 'html',
+        '.java': 'java',
+        '.js': 'javascript',
+        '.json': 'json',
+        '.tex': 'latex',
+        '.lua': 'lua',
+        '.md': 'markdown',
+        '.markdown': 'markdown',
+        '.ocaml': 'ocaml',
+        '.ml': 'ocaml',
+        '.mli': 'ocaml',
+        '.pl': 'perl',
+        '.php': 'php',
+        '.ps1': 'powershell',
+        '.py': 'python',
+        '.rb': 'ruby',
+        '.scad': 'scad',
+        '.scala': 'scala',
+        '.scss': 'scss',
+        '.sql': 'sql',
+        '.svg': 'svg',
+        '.textile': 'textile',
+        '.xml': 'xml'
+      };
+      var match = document.location.pathname.match(/\/.*?(\..*)$/);
+      var mode;
+      if (match) {
+        var ext = match[1];
+        mode = extmap[ext];
+      }
+      if (mode) {
+        var s = document.createElement('script');
+        s.src = "/js/ace/mode-" + mode + ".js";
+        document.head.appendChild(s);
+      }
 
-  editor.setReadOnly(true);
-  editor.getSession().setUseSoftTabs(true);
-  editor.getSession().setTabSize(2);
-  if (mode) {
-    editor.getSession().setMode(new (require("ace/mode/"+mode).Mode));
-  }
+      window.onload = function() {
+        var editor = ace.edit("editor");
 
-  editor.setTheme("ace/theme/idle_fingers");
+        editor.setReadOnly(true);
+        editor.getSession().setUseSoftTabs(true);
+        editor.getSession().setTabSize(2);
+        if (mode) {
+          editor.getSession().setMode(new (require("ace/mode/"+mode).Mode));
+        }
 
-  var docName = encodeURIComponent(document.location.pathname.replace(/^\/edit\//,''));
+        editor.setTheme("ace/theme/idle_fingers");
 
-  var span = document.getElementById('docname').innerText = decodeURIComponent(docName);
+        var docName = encodeURIComponent(document.location.pathname.replace(/^\/edit\//,''));
 
-  //alert("doc name is " + docName);
-  sharejs.open(docName, 'text', function(error, doc) {
-    if (error) {
-      console.error(error);
-      return;
-    }
-    console.log("I just loaded", doc);
-    if (doc.created) {
-      //doc.insert(0, "# Coffeescript editor!\n\nexports.foo = ->\n  console.log 'hi!'");
-    }
+        $('#docname').text(decodeURIComponent(docName));
 
-    doc.attach_ace(editor);
-    editor.setReadOnly(false);
-  });
-};
+        sharejs.open(docName, 'text', function(error, doc) {
+          if (error) {
+            console.error(error);
+            return;
+          }
+          if (doc.created) {
+            $('#docname')[0].innerHTML += " <b>[New!]</b>";
+          }
+          var updateTimeout = null;
+          doc.on('change', function(op) {
+            if (!dopened || $("#dialog").dialog("isOpen") !== true) { return; }
+
+            clearTimeout(updateTimeout);
+            updateTimeout = setTimeout(function() {
+              var frame = $('#liveframe')[0];
+              frame.src = frame.src;
+            }, 500);
+          });
+
+          doc.attach_ace(editor);
+          editor.setReadOnly(false);
+        });
+        sharejs.on
+      };
     </script>
   </body>
 </html>  

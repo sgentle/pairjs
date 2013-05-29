@@ -1,0 +1,34 @@
+<html>
+  <head>
+    <title>Live view</title>
+  </head>
+
+  <body>
+    <iframe id="liveframe" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;"></iframe>
+    <script src="/js/sock.js"></script>
+    <script src="/js/share.js"></script>
+    <script>
+      window.onload = function() {
+        var docName = encodeURIComponent(document.location.pathname.replace(/^\/live\//,''));
+        var frame = document.getElementById('liveframe');
+        frame.src = document.location.pathname.replace(/^\/live/,"/view");
+     
+
+        sharejs.open(docName, 'text', function(error, doc) {
+          if (error) {
+            console.error(error);
+            return;
+          }
+          var updateTimeout = null;
+          doc.on('change', function(op) {
+            clearTimeout(updateTimeout);
+            updateTimeout = setTimeout(function() {
+              frame.src = frame.src;
+            }, 500);
+          });
+        });
+      };
+    </script>
+  </body>
+</html>  
+
