@@ -1,0 +1,82 @@
+<html>
+  <head>
+    <link href="/css/ace.css" rel="stylesheet" type="text/css">
+    <title>Code editor</title>
+  </head>
+
+  <body>
+    <div id="header">
+      <div id="htext">
+        Editing <b id='docname'>...</b>
+        <a style="padding-left: 50px;" href="/code.html">New</a>
+      </div>
+        
+    </div>
+
+    <div id="editor">Loading...</div>
+    <script src="/js/ace/ace.js"></script>
+    <!--<script src="/js/ace/mode-coffee.js"></script>-->
+    <script src="/js/ace/theme-idle_fingers.js"></script>
+    <script src="/js/sock.js"></script>
+    <script src="/js/share.js"></script>
+    <script src="/js/share-ace.js"></script>
+    <script>
+
+var extmap = {
+  '.js': 'javascript',
+  '.coffee': 'coffee',
+  '.litcoffee': 'coffee',
+  '.coffee.md': 'coffee',
+  '.css': 'css',
+  '.json': 'json',
+  '.html': 'html',
+  '.py': 'python',
+  '.rb': 'ruby'
+};
+var match = document.location.pathname.match(/\/.*?(\..*)$/);
+var mode;
+if (match) {
+  var ext = match[1];
+  mode = extmap[ext];
+}
+if (mode) {
+  var s = document.createElement('script');
+  s.src = "/js/ace/mode-" + mode + ".js";
+  document.head.appendChild(s);
+}
+
+window.onload = function() {
+  var editor = ace.edit("editor");
+
+  editor.setReadOnly(true);
+  editor.getSession().setUseSoftTabs(true);
+  editor.getSession().setTabSize(2);
+  if (mode) {
+    editor.getSession().setMode(new (require("ace/mode/"+mode).Mode));
+  }
+
+  editor.setTheme("ace/theme/idle_fingers");
+
+  var docName = encodeURIComponent(document.location.pathname.replace(/^\/edit\//,''));
+
+  var span = document.getElementById('docname').innerText = decodeURIComponent(docName);
+
+  //alert("doc name is " + docName);
+  sharejs.open(docName, 'text', function(error, doc) {
+    if (error) {
+      console.error(error);
+      return;
+    }
+    console.log("I just loaded", doc);
+    if (doc.created) {
+      //doc.insert(0, "# Coffeescript editor!\n\nexports.foo = ->\n  console.log 'hi!'");
+    }
+
+    doc.attach_ace(editor);
+    editor.setReadOnly(false);
+  });
+};
+    </script>
+  </body>
+</html>  
+
