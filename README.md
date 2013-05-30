@@ -11,7 +11,7 @@ I like your buzzwords, how can I get some of them?
 Assuming you have [nodejs](http://nodejs.org) installed, just run this:
 
 ```shell
-$ npm install pairjs
+$ npm install -g pairjs
 ```
 
 And once the slobbering dependency behemoth is satisfied, do this:
