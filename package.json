@@ -1,6 +1,6 @@
 {
   "name": "pairjs",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Instant collaborative coding using the interweb!",
   "main": "server.js",
   "bin": "server.js",
